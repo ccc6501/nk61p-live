@@ -1,0 +1,7 @@
+# Your own measurements stay on your machine
+logs/
+research/photos/
+
+__pycache__/
+*.pyc
+.claude/

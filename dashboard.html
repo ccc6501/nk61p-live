@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NK61P Live</title>
+<meta name="darkreader-lock"><!-- has its own dark theme; stop Dark Reader re-inverting the LCD -->
+<meta name="color-scheme" content="light dark">
+<style>
+  :root {
+    --bg: #14161a;
+    --panel: #1d2026;
+    --panel-2: #252931;
+    --line: #333844;
+    --text: #e6e8ec;
+    --muted: #9198a6;
+    --accent: #e8473a;          /* NKTECH red */
+    --ok: #3fbf7f;
+    --warn: #e6a23c;
+    --bad: #e8473a;
+    --lcd-bg: #b9c0ac;
+    --lcd-bg-2: #a9b19c;
+    --lcd-on: #1b1f17;
+    --lcd-off: rgba(27, 31, 23, 0.07);
+    --chart-line: #e8473a;
+    --chart-grid: #2c313b;
+    --radius: 12px;
+    --mono: ui-monospace, "Cascadia Mono", Consolas, monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    color-scheme: light dark;   /* opts out of Chrome's Auto Dark Mode recoloring */
+  }
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme="dark"]) {
+      --bg: #eef0f3; --panel: #ffffff; --panel-2: #f4f5f7; --line: #d9dce2;
+      --text: #1b1e24; --muted: #5d6573; --chart-grid: #e6e8ec;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 var(--sans); }
+  header {
+    display: flex; align-items: center; gap: 12px; flex-wrap: wrap;
+    padding: 12px 20px; border-bottom: 1px solid var(--line); background: var(--panel);
+  }
+  header h1 { font-size: 16px; margin: 0; letter-spacing: .02em; }
+  header h1 b { color: var(--accent); }
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px; padding: 4px 10px;
+    border-radius: 999px; background: var(--panel-2); border: 1px solid var(--line);
+    font-size: 13px;
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--muted); flex: none; }
+  .pill[data-state="connected"] .dot, .pill[data-state="replay"] .dot { background: var(--ok); }
+  .pill[data-state="waiting"] .dot, .pill[data-state="no-data"] .dot, .pill[data-state="starting"] .dot { background: var(--warn); }
+  .pill[data-state="error"] .dot, .pill[data-state="offline"] .dot { background: var(--bad); }
+  .detail { color: var(--muted); font-size: 13px; }
+  .header-actions { margin-left: auto; display: flex; gap: 12px; align-items: center; }
+  .header-actions button { padding: 5px 10px; font-size: 13px; }
+  .header-actions button.armed { border-color: var(--bad); color: var(--bad); }
+
+  main {
+    display: grid; gap: 16px; padding: 16px 20px 32px; max-width: 1200px; margin: 0 auto;
+    grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr);
+    grid-template-areas: "lcd side" "chart chart" "debug debug";
+  }
+  @media (max-width: 860px) {
+    main { grid-template-columns: minmax(0, 1fr); grid-template-areas: "lcd" "side" "chart" "debug"; padding: 12px 16px 24px; }
+  }
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; min-width: 0; }
+  .card h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0 0 12px; font-weight: 600; }
+
+  /* ---- LCD ---- */
+  /* The LCD grows to the height of the side column instead of leaving a gap under it. */
+  .lcd-card { grid-area: lcd; padding: 14px; background: #20232a; border-color: #000; display: flex; flex-direction: column; }
+  .lcd-card .lcd { flex: 1; display: flex; flex-direction: column; }
+  .lcd-card .lcd-main { flex: 1; }
+  .lcd {
+    background: linear-gradient(180deg, var(--lcd-bg), var(--lcd-bg-2));
+    border-radius: 8px; padding: 12px 16px 14px; color: var(--lcd-on);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,.35);
+    font-family: var(--sans);
+  }
+  .bar-scale { display: flex; justify-content: space-between; font-size: 11px; padding: 0 1px; }
+  .bar { display: grid; grid-template-columns: repeat(60, 1fr); gap: 2px; height: 12px; margin: 2px 0 8px; }
+  .bar i { background: var(--lcd-off); border-radius: 1px; }
+  .bar i.on { background: var(--lcd-on); }
+  .lcd-main { display: grid; grid-template-columns: 54px 1fr auto; align-items: end; gap: 6px; }
+  .ann-col { display: flex; flex-direction: column; gap: 6px; align-self: stretch; justify-content: space-between; padding-bottom: 4px; }
+  .ann { font-size: 12px; font-weight: 700; letter-spacing: .03em; color: var(--lcd-off); }
+  .ann.on { color: var(--lcd-on); }
+  .ann.box { border: 1.5px solid currentColor; border-radius: 3px; padding: 0 3px; align-self: flex-start; font-size: 10px; }
+  .digits { width: 100%; max-height: 230px; display: block; align-self: center; }
+  .digits .seg { fill: var(--lcd-off); }
+  .digits .seg.on { fill: var(--lcd-on); }
+  .unit-col { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; padding-bottom: 6px; min-width: 64px; }
+  .unit { font-size: 30px; font-weight: 700; line-height: 1; }
+  .lcd-foot { display: flex; gap: 14px; margin-top: 8px; flex-wrap: wrap; }
+  .readout-text { margin-top: 10px; color: #c8ccd4; font: 13px var(--mono); display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+
+  /* ---- side ---- */
+  .side { grid-area: side; display: grid; gap: 16px; align-content: start; }
+  .stats { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .stat { background: var(--panel-2); border-radius: 8px; padding: 10px 12px; min-width: 0; }
+  .stat .k { color: var(--muted); font-size: 12px; }
+  .stat .v { font: 600 18px var(--mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button, select {
+    font: inherit; color: var(--text); background: var(--panel-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 7px 12px; cursor: pointer;
+  }
+  button:hover, select:hover { border-color: var(--muted); }
+  button:focus-visible, select:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  button.primary { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+  button.primary[aria-pressed="true"] { background: transparent; color: var(--accent); }
+  button:disabled { opacity: .5; cursor: not-allowed; }
+  .rec { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: currentColor; margin-right: 6px; vertical-align: 1px; }
+  button[aria-pressed="true"] .rec { animation: blink 1s steps(2) infinite; }
+  @keyframes blink { 50% { opacity: 0; } }
+  .log-meta { color: var(--muted); font-size: 13px; margin-top: 8px; overflow-wrap: anywhere; }
+  a { color: var(--accent); }
+
+  /* ---- chart ---- */
+  .chart-card { grid-area: chart; }
+  .chart-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .chart-head h2 { margin: 0; }
+  .chart-wrap { position: relative; height: 280px; }
+  canvas { width: 100%; height: 100%; display: block; }
+  .chart-empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--muted); pointer-events: none; }
+  .chart-empty[hidden] { display: none; }
+
+  /* ---- debug ---- */
+  .debug { grid-area: debug; }
+  .debug summary { cursor: pointer; color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; }
+  .debug pre { font: 12px/1.6 var(--mono); margin: 12px 0 0; white-space: pre-wrap; word-break: break-all; color: var(--text); }
+  .unknown { color: var(--warn); }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+</style>
+</head>
+<body>
+<header>
+  <h1><b>NK61P</b> Live</h1>
+  <span class="pill" id="status" data-state="starting"><span class="dot"></span><span id="status-text">Connecting…</span></span>
+  <span class="detail" id="status-detail"></span>
+  <nav class="header-actions">
+    <a href="/guide" target="_blank" rel="noopener">User guide</a>
+    <button id="quit" type="button">Stop server</button>
+  </nav>
+</header>
+
+<main>
+  <section class="card lcd-card" aria-label="Meter display">
+    <div class="lcd" role="img" id="lcd" aria-label="No reading yet">
+      <div class="bar-scale" aria-hidden="true"><span>0</span><span>10</span><span>20</span><span>30</span><span>40</span><span>50</span><span>60</span></div>
+      <div class="bar" id="bar" aria-hidden="true"></div>
+      <div class="lcd-main">
+        <div class="ann-col">
+          <span class="ann box" data-flag="AUTO">AUTO</span>
+          <span class="ann" data-flag="REL">REL Δ</span>
+          <span class="ann" data-flag="MAX">MAX</span>
+          <span class="ann" data-flag="MIN">MIN</span>
+          <span class="ann" data-flag="DC">DC</span>
+          <span class="ann" data-flag="AC">AC</span>
+        </div>
+        <svg class="digits" id="digits" viewBox="0 0 330 120" aria-hidden="true"></svg>
+        <div class="unit-col">
+          <span class="ann box" data-flag="USB">USB</span>
+          <span class="ann" data-flag="DIODE" title="Diode">▶|</span>
+          <span class="ann" data-flag="CONTINUITY" title="Continuity">•)))</span>
+          <span class="unit" id="unit">&nbsp;</span>
+        </div>
+      </div>
+    </div>
+    <div class="readout-text"><span id="mode-text">—</span><span id="age-text"></span></div>
+  </section>
+
+  <div class="side">
+    <section class="card" aria-labelledby="stats-h">
+      <h2 id="stats-h">Statistics <span class="detail" id="stats-unit"></span></h2>
+      <div class="stats">
+        <div class="stat"><div class="k">Min</div><div class="v" id="s-min">—</div></div>
+        <div class="stat"><div class="k">Max</div><div class="v" id="s-max">—</div></div>
+        <div class="stat"><div class="k">Average</div><div class="v" id="s-avg">—</div></div>
+        <div class="stat"><div class="k">Samples</div><div class="v" id="s-n">0</div></div>
+      </div>
+      <div class="row" style="margin-top:10px"><button id="reset-stats" type="button">Reset stats &amp; chart</button></div>
+    </section>
+
+    <section class="card" aria-labelledby="log-h">
+      <h2 id="log-h">CSV logging</h2>
+      <div class="row">
+        <button id="log-btn" class="primary" type="button" aria-pressed="false"><span class="rec"></span><span id="log-btn-text">Start logging</span></button>
+        <a id="log-link" hidden>Download</a>
+      </div>
+      <div class="log-meta" id="log-meta">Every frame from the meter (~5/s) is written with a timestamp to the <code>logs/</code> folder.</div>
+    </section>
+  </div>
+
+  <section class="card chart-card" aria-labelledby="chart-h">
+    <div class="chart-head">
+      <h2 id="chart-h">Trend</h2>
+      <div class="row">
+        <label class="sr" for="window">Time window</label>
+        <select id="window">
+          <option value="30">30 s</option>
+          <option value="120" selected>2 min</option>
+          <option value="600">10 min</option>
+          <option value="3600">1 hour</option>
+          <option value="0">All</option>
+        </select>
+        <button id="pause" type="button" aria-pressed="false">Pause</button>
+      </div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="chart"></canvas>
+      <div class="chart-empty" id="chart-empty">Waiting for readings…</div>
+    </div>
+  </section>
+
+  <section class="card debug">
+    <details>
+      <summary>Protocol debug</summary>
+      <pre id="debug">—</pre>
+    </details>
+  </section>
+</main>
+
+<script>
+"use strict";
+// ---- 7-segment rendering straight from the raw frame bytes ----
+// Segment bit order on this meter: a=0x01 b=0x02 c=0x04 d=0x08 f=0x10 g=0x20 e=0x40 dp=0x80
+const SEG_PATHS = {
+  0x01: "M10 4 L52 4 L45 11 L17 11 Z",            // a
+  0x02: "M54 6 L54 54 L47 50 L47 13 Z",           // b
+  0x04: "M54 66 L54 114 L47 107 L47 70 Z",        // c
+  0x08: "M10 116 L52 116 L45 109 L17 109 Z",      // d
+  0x10: "M8 6 L8 54 L15 50 L15 13 Z",             // f
+  0x20: "M10 60 L17 55 L45 55 L52 60 L45 65 L17 65 Z", // g
+  0x40: "M8 66 L8 114 L15 107 L15 70 Z",          // e
+};
+const DIGIT_X = [42, 114, 186, 258];   // leftmost digit first
+const svg = document.getElementById("digits");
+const segEls = [];   // [digitIdx][bit] -> element
+const dpEls = [];
+const NS = "http://www.w3.org/2000/svg";
+const minusEl = document.createElementNS(NS, "path");
+minusEl.setAttribute("d", "M2 57 L30 57 L30 64 L2 64 Z");
+minusEl.setAttribute("class", "seg");
+svg.appendChild(minusEl);
+DIGIT_X.forEach((x, i) => {
+  const g = document.createElementNS(NS, "g");
+  g.setAttribute("transform", `translate(${x} 0) skewX(-6)`);
+  const map = {};
+  for (const [bit, d] of Object.entries(SEG_PATHS)) {
+    const p = document.createElementNS(NS, "path");
+    p.setAttribute("d", d);
+    p.setAttribute("class", "seg");
+    g.appendChild(p);
+    map[bit] = p;
+  }
+  svg.appendChild(g);
+  segEls.push(map);
+  const dp = document.createElementNS(NS, "circle");   // decimal point sits LEFT of its digit
+  dp.setAttribute("cx", x - 10); dp.setAttribute("cy", 112); dp.setAttribute("r", 6);
+  dp.setAttribute("class", "seg");
+  svg.appendChild(dp);
+  dpEls.push(dp);
+});
+
+const barEl = document.getElementById("bar");
+const barSegs = Array.from({ length: 60 }, () => barEl.appendChild(document.createElement("i")));
+
+function renderLcd(r) {
+  const b = r.raw.split(" ").map(h => parseInt(h, 16));
+  [9, 8, 7, 6].forEach((byteIdx, i) => {
+    const v = b[byteIdx];
+    for (const bit in segEls[i]) segEls[i][bit].classList.toggle("on", (v & bit) !== 0);
+    dpEls[i].classList.toggle("on", (v & 0x80) !== 0);
+  });
+  minusEl.classList.toggle("on", r.flags.includes("MINUS"));
+  barSegs.forEach((el, i) => el.classList.toggle("on", i < r.bar));
+  document.querySelectorAll("[data-flag]").forEach(el => el.classList.toggle("on", r.flags.includes(el.dataset.flag)));
+  document.getElementById("unit").textContent = (r.prefix === "u" ? "µ" : r.prefix) + r.unit || " ";
+  const text = r.overload ? "OL" : r.display;
+  document.getElementById("lcd").setAttribute("aria-label", `${text} ${r.prefix}${r.unit} ${r.mode}`);
+  document.getElementById("mode-text").textContent = `${r.mode || "—"}  ·  ${r.overload ? "OL (overload)" : r.display + " " + r.prefix + r.unit}`;
+}
+
+// ---- formatting ----
+const SI = [[1e6, "M"], [1e3, "k"], [1, ""], [1e-3, "m"], [1e-6, "µ"], [1e-9, "n"]];
+function fmtSI(v, unit, digits = 4) {
+  if (v === null || v === undefined || !isFinite(v)) return "—";
+  const a = Math.abs(v);
+  const [scale, p] = a === 0 ? [1, ""] : (SI.find(([s]) => a >= s * 0.9995) || SI[SI.length - 1]);
+  return `${(v / scale).toPrecision(digits)} ${p}${unit}`;
+}
+
+// ---- series + stats (one source of truth: `series`) ----
+let series = [];            // {t, v} with v = base SI value or null (OL)
+let seriesKey = null;       // unit+coupling the series belongs to
+let seriesUnit = "";
+let paused = false;
+let lastReadingAt = 0;
+let resolution = 1e-3;      // one display count, in base SI units (from the latest reading)
+
+const PREFIX_MULT = { "": 1, n: 1e-9, u: 1e-6, m: 1e-3, k: 1e3, M: 1e6 };
+function displayResolution(r) {
+  const dot = r.display.indexOf(".");
+  const decimals = dot < 0 ? 0 : r.display.length - dot - 1;
+  return 10 ** -decimals * (PREFIX_MULT[r.prefix] ?? 1);
+}
+
+// Autoranging (mV<->V, kΩ<->MΩ) must not reset the series, so the key ignores the prefix.
+function keyOf(r) {
+  const has = f => r.flags.includes(f);
+  const kind = has("CONTINUITY") ? "Continuity" : has("DIODE") ? "Diode" : has("AC") ? "AC" : has("DC") ? "DC" : "";
+  return `${kind} ${r.unit}`.trim();
+}
+
+function pushReading(r) {
+  const k = keyOf(r);
+  // The first frame after a dial change is a blank "0000" while the meter switches; drop it.
+  if (k !== seriesKey) { series = []; seriesKey = k; seriesUnit = r.unit; return; }
+  if (!r.overload) resolution = displayResolution(r);
+  series.push({ t: r.t * 1000, v: r.overload ? null : r.base_value });
+  if (series.length > 200000) series.splice(0, series.length - 200000);
+}
+
+function renderStats() {
+  const vals = series.map(p => p.v).filter(v => v !== null);
+  const n = vals.length;
+  const min = n ? Math.min(...vals) : null, max = n ? Math.max(...vals) : null;
+  const avg = n ? vals.reduce((a, b) => a + b, 0) / n : null;
+  document.getElementById("s-min").textContent = fmtSI(min, seriesUnit);
+  document.getElementById("s-max").textContent = fmtSI(max, seriesUnit);
+  document.getElementById("s-avg").textContent = fmtSI(avg, seriesUnit);
+  document.getElementById("s-n").textContent = n;
+  document.getElementById("stats-unit").textContent = seriesKey ? `· ${seriesKey}` : "";
+}
+
+// ---- chart ----
+const canvas = document.getElementById("chart");
+const ctx = canvas.getContext("2d");
+function css(name) { return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+function niceTicks(lo, hi, count = 5) {
+  const span = hi - lo || Math.abs(hi) || 1;
+  const step0 = span / count;
+  const mag = 10 ** Math.floor(Math.log10(step0));
+  const step = [1, 2, 2.5, 5, 10].map(m => m * mag).find(s => s >= step0);
+  const ticks = [];
+  // Snap outward so the extremes always sit inside a labelled gridline.
+  const end = Math.ceil(hi / step - 1e-9) * step;
+  for (let v = Math.floor(lo / step + 1e-9) * step; v <= end + step * 1e-9; v += step) ticks.push(+v.toPrecision(12));
+  return ticks;
+}
+
+function drawChart() {
+  const dpr = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  if (canvas.width !== w * dpr || canvas.height !== h * dpr) { canvas.width = w * dpr; canvas.height = h * dpr; }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  ctx.clearRect(0, 0, w, h);
+
+  const win = +document.getElementById("window").value * 1000;
+  const now = paused && series.length ? series[series.length - 1].t : Date.now();
+  const pts = win ? series.filter(p => p.t >= now - win) : series;
+  const vals = pts.map(p => p.v).filter(v => v !== null);
+  document.getElementById("chart-empty").hidden = vals.length > 0;
+  if (!vals.length) return;
+
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  // Never zoom in past a few counts of the meter's own resolution - it's just noise.
+  const minSpan = 4 * resolution;
+  if (hi - lo < minSpan) { const mid = (hi + lo) / 2; lo = mid - minSpan / 2; hi = mid + minSpan / 2; }
+  const ticks = niceTicks(lo, hi);
+  lo = Math.min(lo, ticks[0]); hi = Math.max(hi, ticks[ticks.length - 1]);
+
+  const padL = 78, padR = 12, padT = 8, padB = 24;
+  const t0 = win ? now - win : pts[0].t, t1 = now;
+  const X = t => padL + (t - t0) / Math.max(t1 - t0, 1) * (w - padL - padR);
+  const Y = v => padT + (1 - (v - lo) / (hi - lo)) * (h - padT - padB);
+
+  ctx.font = "11px " + css("--mono");
+  ctx.strokeStyle = css("--chart-grid"); ctx.fillStyle = css("--muted"); ctx.lineWidth = 1;
+  ctx.textAlign = "right"; ctx.textBaseline = "middle";
+  for (const v of ticks) {
+    const y = Math.round(Y(v)) + 0.5;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(w - padR, y); ctx.stroke();
+    ctx.fillText(fmtSI(v, seriesUnit, 4), padL - 8, y);
+  }
+  ctx.textAlign = "center"; ctx.textBaseline = "top";
+  const span = (t1 - t0) / 1000;
+  for (let i = 0; i <= 4; i++) {
+    const t = t0 + (t1 - t0) * i / 4;
+    const ago = span - span * i / 4;
+    ctx.fillText(ago < 0.5 ? "now" : ago >= 120 ? `-${(ago / 60).toFixed(1)}m` : `-${ago.toFixed(0)}s`, X(t), h - padB + 6);
+  }
+
+  // OL / gaps break the line rather than dropping to zero
+  ctx.strokeStyle = css("--chart-line"); ctx.lineWidth = 2; ctx.lineJoin = "round";
+  ctx.beginPath();
+  let pen = false;
+  for (const p of pts) {
+    if (p.v === null) { pen = false; continue; }
+    const x = X(p.t), y = Y(p.v);
+    pen ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+    pen = true;
+  }
+  ctx.stroke();
+}
+
+// ---- status / log UI ----
+const STATUS_TEXT = {
+  starting: "Starting…", connected: "Connected", replay: "Replay", waiting: "Waiting for meter",
+  "no-data": "No data", error: "Serial error", offline: "Server offline",
+};
+function renderStatus(s) {
+  const pill = document.getElementById("status");
+  pill.dataset.state = s.state;
+  document.getElementById("status-text").textContent = STATUS_TEXT[s.state] || s.state;
+  document.getElementById("status-detail").textContent = [s.port, s.detail].filter(Boolean).join(" — ");
+}
+
+function renderLog(l) {
+  const btn = document.getElementById("log-btn");
+  btn.setAttribute("aria-pressed", String(l.active));
+  document.getElementById("log-btn-text").textContent = l.active ? "Stop logging" : "Start logging";
+  const link = document.getElementById("log-link");
+  link.hidden = !l.file;
+  if (l.file) { link.href = `/logs/${l.file}`; link.textContent = `Download ${l.file}`; }
+  if (l.file) document.getElementById("log-meta").textContent = `${l.active ? "Recording" : "Saved"}: logs/${l.file} — ${l.rows} rows`;
+}
+
+document.getElementById("log-btn").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  btn.disabled = true;
+  try {
+    const active = btn.getAttribute("aria-pressed") === "true";
+    const res = await fetch(active ? "/api/log/stop" : "/api/log/start", { method: "POST" });
+    renderLog(await res.json());
+  } catch (err) {
+    document.getElementById("log-meta").textContent = "Could not reach the reader: " + err.message;
+  } finally { btn.disabled = false; }
+});
+document.getElementById("pause").addEventListener("click", (e) => {
+  paused = !paused;
+  e.currentTarget.setAttribute("aria-pressed", String(paused));
+  e.currentTarget.textContent = paused ? "Resume" : "Pause";
+  drawChart();
+});
+document.getElementById("reset-stats").addEventListener("click", () => { series = []; renderStats(); drawChart(); });
+document.getElementById("window").addEventListener("change", drawChart);
+
+// Stopping ends logging and frees the COM port; ask for a second click instead of a dialog.
+let quitTimer = null;
+document.getElementById("quit").addEventListener("click", async (e) => {
+  const btn = e.currentTarget;
+  if (!btn.classList.contains("armed")) {
+    btn.classList.add("armed");
+    btn.textContent = "Click again to stop";
+    quitTimer = setTimeout(() => { btn.classList.remove("armed"); btn.textContent = "Stop server"; }, 3000);
+    return;
+  }
+  clearTimeout(quitTimer);
+  btn.disabled = true;
+  btn.textContent = "Stopped";
+  try { await fetch("/api/quit", { method: "POST" }); } catch {}
+  renderStatus({ state: "offline", detail: "Stopped. Use the desktop icon to start again." });
+});
+window.addEventListener("resize", drawChart);
+
+// ---- data stream ----
+let last = null;
+function onReading(r) {
+  last = r;
+  lastReadingAt = Date.now();
+  renderLcd(r);
+  pushReading(r);
+  if (r.log) renderLog(r.log);
+  const dbg = [
+    `raw      ${r.raw}`,
+    `display  ${JSON.stringify(r.display)}   value ${r.value}   base ${r.base_value}`,
+    `unit     ${JSON.stringify(r.prefix + r.unit)}   mode ${JSON.stringify(r.mode)}   bar ${r.bar}/60`,
+    `flags    ${r.flags.join(" ")}`,
+    `unknown  ${Object.keys(r.unknown_bits).length ? JSON.stringify(r.unknown_bits) + "   <- unmapped bits, tell Claude what the LCD showed" : "none"}`,
+  ].join("\n");
+  const pre = document.getElementById("debug");
+  pre.textContent = dbg;
+  pre.classList.toggle("unknown", Object.keys(r.unknown_bits).length > 0);
+}
+
+// Redraw on a timer, not per frame, so the chart keeps scrolling between readings.
+setInterval(() => {
+  if (!paused) { drawChart(); renderStats(); }
+  const age = last ? (Date.now() - lastReadingAt) / 1000 : null;
+  document.getElementById("age-text").textContent = age === null ? "" : age > 2 ? `last reading ${age.toFixed(0)} s ago` : "live";
+}, 250);
+
+function connect() {
+  const es = new EventSource("/events");
+  es.addEventListener("reading", e => onReading(JSON.parse(e.data)));
+  es.addEventListener("status", e => renderStatus(JSON.parse(e.data)));
+  es.addEventListener("log", e => renderLog(JSON.parse(e.data)));
+  es.onerror = () => renderStatus({ state: "offline", detail: "Is nk61p.py still running?" });
+}
+fetch("/api/state").then(r => r.json()).then(s => {
+  renderStatus(s.status); renderLog(s.log);
+  if (s.last) onReading(s.last);
+}).catch(() => renderStatus({ state: "offline", detail: "Is nk61p.py still running?" }));
+connect();
+</script>
+</body>
+</html>

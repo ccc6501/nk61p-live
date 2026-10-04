@@ -1,0 +1,849 @@
+<title>NK61P Field Guide</title>
+<!-- The page has its own dark theme; tell Dark Reader not to re-invert it (it turned the meter drawing white). -->
+<meta name="darkreader-lock">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Semi+Condensed:wght@500;600;700&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+/* Layout: sticky front-panel drawing on the left that follows the mode cards scrolling on the right; reference sections run full width below. */
+:root {
+  --paper: #eceff2;          /* cool bench grey */
+  --card: #ffffff;
+  --ink: #15181d;
+  --muted: #586070;
+  --line: #d3d8df;
+  --red: #c4362c;            /* NKTECH red: danger + brand */
+  --red-tint: #fbe9e7;
+  --blue: #2c67ad;           /* the dial's blue band: V and current positions */
+  --blue-tint: #e6eef8;
+  --ok: #2d7d4f;
+  --meter: #23262c;          /* the meter body itself stays dark in both themes */
+  --meter-edge: #111317;
+  --meter-text: #d8dbe0;
+  --lcd: #b7bfaa;
+  --lcd-ink: #1b1f17;
+  --lcd-ghost: rgba(27, 31, 23, 0.08);
+  --display: "Barlow Semi Condensed", "Arial Narrow", "Segoe UI", sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  /* Declaring both schemes stops Chrome's "Auto Dark Mode" from inverting the page,
+     which turned the dark meter drawing white and hid its labels. */
+  color-scheme: light dark;
+}
+:root[data-theme="light"] { color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #121418; --card: #1a1d22; --ink: #e6e8ec; --muted: #9aa2b0; --line: #2d323b;
+    --red: #ee6155; --red-tint: #2c1816; --blue: #6ea4e8; --blue-tint: #172234; --ok: #5cc28a;
+    --meter: #2a2e35; --meter-edge: #08090b;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #121418; --card: #1a1d22; --ink: #e6e8ec; --muted: #9aa2b0; --line: #2d323b;
+  --red: #ee6155; --red-tint: #2c1816; --blue: #6ea4e8; --blue-tint: #172234; --ok: #5cc28a;
+  --meter: #2a2e35; --meter-edge: #08090b;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--paper); color: var(--ink); font: 17px/1.55 var(--body); margin: 0; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 0 64px; }
+h1, h2, h3 { font-family: var(--display); line-height: 1.1; text-wrap: balance; margin: 0; }
+h1 { font-size: clamp(40px, 6vw, 64px); font-weight: 700; letter-spacing: -0.01em; }
+h2 { font-size: 32px; font-weight: 700; }
+h3 { font-size: 22px; font-weight: 600; }
+p { margin: 0; }
+a { color: var(--blue); }
+:focus-visible { outline: 3px solid var(--blue); outline-offset: 2px; border-radius: 4px; }
+code, .mono { font-family: var(--mono); font-size: 0.88em; }
+.eyebrow { font: 600 13px var(--display); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+
+/* ---------- header ---------- */
+header.top { padding-block: 40px 28px; display: grid; gap: 14px; }
+header.top .lede { font-size: 20px; color: var(--muted); max-width: 62ch; }
+.specs { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.spec { font: 600 15px var(--display); letter-spacing: 0.03em; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--card); }
+
+/* ---------- golden rules ---------- */
+.rules { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 40px; }
+.rule { background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; display: grid; gap: 4px; min-width: 0; }
+.rule b { font-family: var(--display); font-size: 19px; font-weight: 600; }
+.rule p { color: var(--muted); font-size: 15.5px; }
+@media (max-width: 900px) { .rules { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .rules { grid-template-columns: minmax(0, 1fr); } }
+
+/* ---------- modes: sticky meter + cards ---------- */
+.modes { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 36px; align-items: start; }
+.meter-col { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 16px); display: grid; gap: 10px; }
+.meter-svg { width: 100%; max-height: calc(100vh - 90px); height: auto; display: block; }
+.legend { display: flex; gap: 16px; justify-content: center; font-size: 14px; color: var(--muted); flex-wrap: wrap; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { width: 14px; height: 14px; border-radius: 50%; border: 4px solid; display: inline-block; }
+.legend .l-red { border-color: var(--red); }
+.legend .l-black { border-color: var(--ink); }
+.legend .l-adapter { border-color: var(--blue); }
+@media (max-width: 900px) {
+  .modes { grid-template-columns: minmax(0, 1fr); }
+  .meter-col { position: static; max-width: 360px; margin: 0 auto; }
+}
+
+/* SVG meter parts */
+.m-body { fill: var(--meter); stroke: var(--meter-edge); stroke-width: 4; }
+.m-text { fill: var(--meter-text); font: 600 11px var(--display); letter-spacing: 0.04em; }
+.m-brand { fill: #e8473a; font: 700 13px var(--display); letter-spacing: 0.06em; }
+.m-lcd { fill: var(--lcd); }
+.m-ann { fill: var(--lcd-ghost); font: 700 11px var(--body); }
+.m-ann.on { fill: var(--lcd-ink); }
+.m-unit { fill: var(--lcd-ink); font: 700 22px var(--body); }
+.seg { fill: var(--lcd-ghost); }
+.seg.on { fill: var(--lcd-ink); }
+.m-btn rect { fill: #3a3e46; stroke: #15171b; stroke-width: 1.5; }
+.m-btn.redbtn rect { fill: #d33a2f; }
+.m-btn text { fill: #f1f2f4; font: 600 10px var(--display); letter-spacing: 0.03em; }
+.m-ring { fill: #31353c; stroke: #15171b; stroke-width: 2; }
+.m-knob { fill: #181a1e; stroke: #000; stroke-width: 2; }
+.m-pointer { fill: #34383f; }
+.m-pointer-tip { fill: #f1f2f4; }
+.m-knob-g { transition: transform 0.45s cubic-bezier(.3, 1.4, .5, 1); }
+.dial-pos { cursor: pointer; }
+.dial-pos rect { fill: #d9dde3; }
+.dial-pos.blue rect { fill: #3a78c2; }
+.dial-pos text { fill: #1b1e23; font: 700 12px var(--display); }
+.dial-pos.blue text { fill: #fff; }
+.dial-pos.off text { fill: #ff6a5c; }
+.dial-pos.off rect { fill: transparent; }
+.dial-pos.active rect { stroke: #ffd24d; stroke-width: 3; }
+.dial-pos:focus-visible rect { stroke: #ffd24d; stroke-width: 3; }
+.m-jack-hole { fill: #0b0c0e; }
+.m-jack-ring { fill: none; stroke: #4a4f58; stroke-width: 4; transition: stroke 0.2s; }
+.m-jack-ring.red { stroke: var(--red); stroke-width: 6; }
+.m-jack-ring.black { stroke: #f1f2f4; stroke-width: 6; }
+.m-jack-ring.adapter { stroke: var(--blue); stroke-width: 6; }
+.m-jack-label { fill: var(--meter-text); font: 600 10px var(--display); }
+@media (prefers-reduced-motion: reduce) { .m-knob-g, .m-jack-ring { transition: none; } }
+
+/* cards */
+.cards { display: grid; gap: 22px; min-width: 0; }
+.card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 22px 24px; display: grid; gap: 16px; min-width: 0; scroll-margin-top: 20px; }
+.card-head { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+.dial-chip { font: 700 18px var(--display); padding: 2px 12px; border-radius: 6px; background: #d9dde3; color: #1b1e23; min-width: 48px; text-align: center; }
+.dial-chip.blue { background: #3a78c2; color: #fff; }
+.card-head .purpose { color: var(--muted); flex-basis: 100%; font-size: 17px; }
+.grid2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px 26px; }
+@media (max-width: 640px) { .grid2 { grid-template-columns: minmax(0, 1fr); } }
+.block { display: grid; gap: 6px; align-content: start; min-width: 0; }
+.block h4, .caution h4, .tip h4 { margin: 0; font: 600 13px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+ul, ol { margin: 0; padding-left: 1.25em; display: grid; gap: 4px; }
+.caution { background: var(--red-tint); border-radius: 10px; padding: 12px 16px; display: grid; gap: 6px; }
+.caution h4 { color: var(--red); }
+.tip { background: var(--blue-tint); border-radius: 10px; padding: 12px 16px; display: grid; gap: 6px; }
+.tip h4 { color: var(--blue); }
+.connect { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.jacks { display: inline-flex; gap: 6px; padding: 6px 8px; border-radius: 10px; background: var(--meter); }
+.jk { font: 600 12px var(--display); color: #9ba1ab; padding: 4px 8px; border-radius: 999px; border: 3px solid #4a4f58; background: #0b0c0e; white-space: nowrap; }
+.jk.red { border-color: var(--red); color: #fff; }
+.jk.black { border-color: #f1f2f4; color: #fff; }
+.jk.adapter { border-color: var(--blue); color: #fff; }
+.connect p { font-size: 15.5px; color: var(--muted); min-width: 0; flex: 1 1 180px; }
+.btns { display: flex; flex-wrap: wrap; gap: 6px; }
+.btn-chip { font: 600 14px var(--display); letter-spacing: 0.02em; padding: 2px 9px; border-radius: 6px; background: #3a3e46; color: #f1f2f4; }
+.btn-chip.redbtn { background: #d33a2f; }
+.lcd-sample { justify-self: start; display: inline-flex; align-items: center; gap: 10px; background: var(--lcd); color: var(--lcd-ink); border-radius: 8px; padding: 6px 14px; box-shadow: inset 0 2px 6px rgba(0,0,0,.25); }
+.lcd-sample svg { height: 38px; width: auto; display: block; }
+.lcd-sample .u { font: 700 20px var(--body); }
+.lcd-sample .a { font: 700 11px var(--body); display: grid; gap: 1px; }
+.sub { border-top: 1px solid var(--line); padding-top: 14px; display: grid; gap: 10px; }
+.sub-head { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.sub-head .sym { font: 700 18px var(--display); color: var(--blue); }
+
+/* ---------- reference sections ---------- */
+section.ref { margin-top: 56px; display: grid; gap: 18px; }
+section.ref > header { display: grid; gap: 6px; }
+section.ref > header p { color: var(--muted); max-width: 70ch; }
+.btn-table, .tbl { width: 100%; border-collapse: collapse; background: var(--card); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.tbl-wrap { overflow-x: auto; border-radius: 12px; }
+.tbl th, .tbl td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl th { font: 600 13px var(--display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); background: var(--paper); }
+.tbl td:first-child { white-space: nowrap; }
+.tbl .num { font-variant-numeric: tabular-nums; }
+.disp-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 900px) { .disp-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 520px) { .disp-grid { grid-template-columns: minmax(0, 1fr); } }
+.disp { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 8px; align-content: start; min-width: 0; }
+.disp .ann-sample { justify-self: start; font: 700 14px var(--body); background: var(--lcd); color: var(--lcd-ink); padding: 3px 10px; border-radius: 6px; }
+.disp .ann-sample.box span { border: 1.5px solid currentColor; border-radius: 3px; padding: 0 3px; font-size: 12px; }
+.disp p { color: var(--muted); font-size: 15.5px; }
+.cat { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 760px) { .cat { grid-template-columns: minmax(0, 1fr); } }
+.cat > div { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px; display: grid; gap: 6px; align-content: start; }
+.cat b { font: 700 24px var(--display); }
+.cat .yes { color: var(--ok); font-weight: 600; }
+.cat p { color: var(--muted); font-size: 15.5px; }
+.two { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 760px) { .two { grid-template-columns: minmax(0, 1fr); } }
+.panel { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+footer { margin-top: 56px; color: var(--muted); font-size: 14.5px; border-top: 1px solid var(--line); padding-top: 18px; }
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <span class="eyebrow">NKTECH NK61P · Digital multimeter</span>
+    <h1>NK61P Field Guide</h1>
+    <p class="lede">What every position on the dial is for, which jacks to use, how to take the reading, and what to watch out for. Click a dial position on the drawing to jump to it.</p>
+    <div class="specs" aria-label="Key specifications">
+      <span class="spec">6000 counts</span><span class="spec">True RMS</span><span class="spec">Auto-ranging</span>
+      <span class="spec">1000 V CAT III</span><span class="spec">600 V CAT IV</span><span class="spec">USB link</span>
+    </div>
+  </header>
+
+  <div class="rules" aria-label="Rules for every measurement">
+    <div class="rule"><b>Leads before dial</b><p>Put the red lead in the right jack for the job, then turn the dial. Never turn the dial while the probes touch a live circuit.</p></div>
+    <div class="rule"><b>Power off for Ω</b><p>Resistance, continuity, diode and capacitance only work on dead circuits. Discharge capacitors first.</p></div>
+    <div class="rule"><b>Current goes in series</b><p>In µA, mA or A the meter is nearly a short circuit. Never put the probes across a battery, supply or outlet.</p></div>
+    <div class="rule"><b>Test, measure, test</b><p>Before trusting a "0 V" reading on something you'll touch, check the meter on a known live source, then again after.</p></div>
+  </div>
+
+  <div class="modes">
+    <div class="meter-col">
+      <svg class="meter-svg" id="meter" viewBox="0 0 340 600" role="img" aria-labelledby="meter-title">
+        <title id="meter-title">Front panel of the NK61P. The dial, display and lit-up jacks follow the mode you are reading about.</title>
+        <rect class="m-body" x="8" y="8" width="324" height="584" rx="34"/>
+        <text class="m-text" x="40" y="36">USB LINK · NK61P</text>
+        <text class="m-brand" x="300" y="36" text-anchor="end">NKTECH</text>
+        <rect class="m-lcd" x="34" y="46" width="272" height="116" rx="8"/>
+        <g id="lcd-bar"></g>
+        <text class="m-ann" id="ann-AUTO" x="46" y="82">AUTO</text>
+        <text class="m-ann" id="ann-USB" x="292" y="82" text-anchor="end">USB</text>
+        <text class="m-ann" id="ann-DC" x="46" y="150">DC</text>
+        <text class="m-ann" id="ann-AC" x="68" y="150">AC</text>
+        <g id="lcd-digits" transform="translate(96 84)"></g>
+        <text class="m-unit" id="lcd-unit" x="296" y="152" text-anchor="end">V</text>
+
+        <g class="m-btn"><rect x="22" y="176" width="68" height="26" rx="7"/><text x="56" y="193" text-anchor="middle">RANGE</text></g>
+        <g class="m-btn"><rect x="98" y="176" width="68" height="26" rx="7"/><text x="132" y="193" text-anchor="middle">Hz%</text></g>
+        <g class="m-btn"><rect x="174" y="176" width="68" height="26" rx="7"/><text x="208" y="193" text-anchor="middle">REL/USB</text></g>
+        <g class="m-btn"><rect x="250" y="176" width="68" height="26" rx="7"/><text x="284" y="193" text-anchor="middle">°C/°F</text></g>
+        <g class="m-btn redbtn"><rect x="22" y="212" width="68" height="30" rx="9"/><text x="56" y="231" text-anchor="middle">FUNC.</text></g>
+        <g class="m-btn"><rect x="120" y="210" width="100" height="24" rx="7"/><text x="170" y="226" text-anchor="middle">MAX/MIN</text></g>
+        <g class="m-btn redbtn"><rect x="250" y="212" width="68" height="30" rx="9"/><text x="284" y="231" text-anchor="middle">H / ☀</text></g>
+
+        <circle class="m-ring" cx="170" cy="362" r="80"/>
+        <g id="dial-labels"></g>
+        <g class="m-knob-g" id="knob" style="transform-origin: 170px 362px">
+          <circle class="m-knob" cx="170" cy="362" r="62"/>
+          <rect class="m-pointer" x="160" y="296" width="20" height="132" rx="8"/>
+          <rect class="m-pointer-tip" x="166" y="302" width="8" height="26" rx="3"/>
+        </g>
+
+        <g id="jacks">
+          <circle class="m-jack-ring" id="jack-a10" cx="74" cy="494" r="17"/><circle class="m-jack-hole" cx="74" cy="494" r="9"/>
+          <text class="m-jack-label" x="100" y="490">10A MAX</text><text class="m-jack-label" x="100" y="502">FUSED</text>
+          <circle class="m-jack-ring" id="jack-v" cx="270" cy="494" r="17"/><circle class="m-jack-hole" cx="270" cy="494" r="9"/>
+          <text class="m-jack-label" x="244" y="490" text-anchor="end">VΩHz% Temp</text><text class="m-jack-label" x="244" y="502" text-anchor="end">1000V⎓ 750V~</text>
+          <circle class="m-jack-ring" id="jack-ma" cx="74" cy="552" r="17"/><circle class="m-jack-hole" cx="74" cy="552" r="9"/>
+          <text class="m-jack-label" x="100" y="548">µA mA</text><text class="m-jack-label" x="100" y="560">600mA FUSED</text>
+          <circle class="m-jack-ring" id="jack-com" cx="232" cy="552" r="17"/><circle class="m-jack-hole" cx="232" cy="552" r="9"/>
+          <text class="m-jack-label" x="206" y="556" text-anchor="end">COM</text>
+          <text class="m-jack-label" x="22" y="527" fill-opacity=".7">hFE</text>
+        </g>
+      </svg>
+      <div class="legend" aria-hidden="true"><span><i class="l-red"></i>Red lead</span><span><i class="l-black"></i>Black lead</span><span><i class="l-adapter"></i>Adapter</span></div>
+    </div>
+
+    <div class="cards">
+
+      <!-- V -->
+      <article class="card" id="mode-v" data-mode="v">
+        <div class="card-head">
+          <span class="dial-chip blue">V</span>
+          <h3>Voltage (DC and AC)</h3>
+          <p class="purpose">Measures the push behind a circuit, from batteries and USB rails up to wall outlets.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk">mA</span><span class="jk black">COM</span><span class="jk red">VΩHz</span></span>
+          <p>Red in <b>VΩHz</b>, black in <b>COM</b>. Probes go <b>across</b> the thing you're measuring, in parallel.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>Battery health (a "9 V" battery under 7.5 V is spent)</li>
+            <li>Power supplies, USB 5 V, 3.3 V logic rails</li>
+            <li>Car electrical: 12.6 V resting, about 14 V running</li>
+            <li>Outlets and appliance supply (AC)</li>
+          </ul></div>
+          <div class="block"><h4>How to</h4><ol>
+            <li>Turn the dial to <b>V</b>.</li>
+            <li>Press <b>FUNC</b> to choose DC or AC. The screen shows <b>DC</b> or <b>AC</b>.</li>
+            <li>Touch black to ground or negative first, then red to the test point.</li>
+            <li>A minus sign means the red probe is on the more negative side.</li>
+          </ol></div>
+        </div>
+        <div class="caution"><h4>Careful</h4><ul>
+          <li>Limits: <b>1000 V DC</b> and <b>750 V AC</b>. Don't measure anything that could exceed them.</li>
+          <li>Keep your fingers behind the finger guards on the probes.</li>
+          <li>On mains, the meter and leads must be rated for the place you're measuring. See <a href="#safety">safety ratings</a>.</li>
+        </ul></div>
+        <div class="grid2">
+          <div class="block"><h4>Buttons that work here</h4><div class="btns"><span class="btn-chip redbtn">FUNC</span><span class="btn-chip">RANGE</span><span class="btn-chip">Hz%</span><span class="btn-chip">REL</span><span class="btn-chip">MAX/MIN</span><span class="btn-chip redbtn">HOLD</span></div></div>
+          <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="5.195" data-unit="V" data-ann="AUTO DC"></div></div>
+        </div>
+      </article>
+
+      <!-- mV -->
+      <article class="card" id="mode-mv" data-mode="mv">
+        <div class="card-head">
+          <span class="dial-chip blue">mV</span>
+          <h3>Millivolts</h3>
+          <p class="purpose">Finer resolution for signals under 600 mV. It still autoranges within that span.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk">mA</span><span class="jk black">COM</span><span class="jk red">VΩHz</span></span>
+          <p>Same jacks as volts.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>Sensor outputs (strain gauges, current-sense amps, thermocouple voltage)</li>
+            <li>Voltage across a current-shunt resistor</li>
+            <li>Voltage drop across a switch, relay contact or connector. Anything over about 100 mV on a closed contact means a bad joint.</li>
+          </ul></div>
+          <div class="block"><h4>How to</h4><ol>
+            <li>Turn the dial to <b>mV</b> and press <b>FUNC</b> for DC or AC.</li>
+            <li>Connect across the small signal.</li>
+            <li>If you see <b>OL</b>, the signal is over 600 mV. Switch to <b>V</b>.</li>
+          </ol></div>
+        </div>
+        <div class="tip"><h4>Tip</h4><p>Start unknown voltages in <b>V</b>. Use mV once you know the signal is small.</p></div>
+        <div class="grid2">
+          <div class="block"><h4>Buttons that work here</h4><div class="btns"><span class="btn-chip redbtn">FUNC</span><span class="btn-chip">REL</span><span class="btn-chip">MAX/MIN</span><span class="btn-chip redbtn">HOLD</span></div></div>
+          <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="12.48" data-unit="mV" data-ann="AUTO DC"></div></div>
+        </div>
+      </article>
+
+      <!-- Hz -->
+      <article class="card" id="mode-hz" data-mode="hz">
+        <div class="card-head">
+          <span class="dial-chip">Hz%</span>
+          <h3>Frequency and duty cycle</h3>
+          <p class="purpose">How fast a signal repeats (Hz) and what share of each cycle it is high (%).</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk">mA</span><span class="jk black">COM</span><span class="jk red">VΩHz</span></span>
+          <p>Black to the signal's ground, red to the signal.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>PWM from a microcontroller (fan, LED dimming, servo)</li>
+            <li>Clock and oscillator outputs</li>
+            <li>Fan tachometer pulses, signal generators</li>
+          </ul></div>
+          <div class="block"><h4>How to</h4><ol>
+            <li>Turn the dial to <b>Hz%</b>.</li>
+            <li>Connect to the signal. The screen shows the frequency.</li>
+            <li>Press <b>Hz%</b> to switch to duty cycle in %, and press again to switch back.</li>
+          </ol></div>
+        </div>
+        <div class="caution"><h4>Careful</h4><ul>
+          <li>This position is for low-voltage signals. To check mains frequency, use <b>V</b> on AC and press <b>Hz%</b>.</li>
+          <li>Noisy or slow edges give jumpy readings. Probe close to the source and keep the ground short.</li>
+        </ul></div>
+        <div class="grid2">
+          <div class="block"><h4>Buttons that work here</h4><div class="btns"><span class="btn-chip">Hz%</span><span class="btn-chip">MAX/MIN</span><span class="btn-chip redbtn">HOLD</span></div></div>
+          <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="1.000" data-unit="kHz" data-ann="AUTO"></div></div>
+        </div>
+      </article>
+
+      <!-- Ohm group -->
+      <article class="card" id="mode-ohm" data-mode="ohm">
+        <div class="card-head">
+          <span class="dial-chip">▶| Ω ⊣⊢</span>
+          <h3>Resistance, continuity, diode, capacitance</h3>
+          <p class="purpose">Four tests share this position. Press <b>FUNC</b> to step through them in this order: Ω → continuity → diode → capacitance.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk">mA</span><span class="jk black">COM</span><span class="jk red">VΩHz</span></span>
+          <p>Red in <b>VΩHz</b>, black in <b>COM</b>. The meter supplies its own small test voltage.</p>
+        </div>
+        <div class="caution"><h4>Careful, for all four</h4><ul>
+          <li><b>The circuit must be switched off.</b> Any outside voltage gives wrong readings and can damage the meter.</li>
+          <li>Discharge capacitors before testing them or anything near them. Large ones can hold a dangerous charge.</li>
+        </ul></div>
+
+        <div class="sub" data-mode="ohm">
+          <div class="sub-head"><span class="sym">Ω</span><h3>Resistance</h3></div>
+          <div class="grid2">
+            <div class="block"><h4>Use it for</h4><ul>
+              <li>Checking resistor values, pots and thermistors</li>
+              <li>Heater elements, motor and relay coils</li>
+              <li>Fuses (good ≈ 0 Ω, blown = <b>OL</b>)</li>
+            </ul></div>
+            <div class="block"><h4>How to</h4><ol>
+              <li>Touch the probes across the part. Polarity doesn't matter.</li>
+              <li><b>OL</b> means open or above range. Autorange steps through Ω, kΩ and MΩ.</li>
+              <li>For low values, touch the probe tips together, press <b>REL</b>, then measure. This subtracts the leads' own resistance.</li>
+            </ol></div>
+          </div>
+          <div class="tip"><h4>Tip</h4><p>Don't pinch both probe tips with your fingers on high values: your body adds a parallel path. Readings taken in-circuit are often low because of other parts in parallel. Lift one leg of the part for a true value.</p></div>
+          <div class="lcd-sample" data-lcd="4.700" data-unit="kΩ" data-ann="AUTO"></div>
+        </div>
+
+        <div class="sub" data-mode="cont">
+          <div class="sub-head"><span class="sym">•)))</span><h3>Continuity</h3></div>
+          <div class="grid2">
+            <div class="block"><h4>Use it for</h4><ul>
+              <li>Finding which wire goes where in a cable or harness</li>
+              <li>Checking switches, fuses and PCB traces</li>
+              <li>Hunting shorts between power and ground</li>
+            </ul></div>
+            <div class="block"><h4>How to</h4><ol>
+              <li>Press <b>FUNC</b> once from Ω. The •))) symbol appears.</li>
+              <li>Touch the probes across the path. A beep means a low-resistance connection.</li>
+            </ol></div>
+          </div>
+          <div class="lcd-sample" data-lcd="0.4" data-unit="Ω" data-ann=""></div>
+        </div>
+
+        <div class="sub" data-mode="diode">
+          <div class="sub-head"><span class="sym">▶|</span><h3>Diode</h3></div>
+          <div class="grid2">
+            <div class="block"><h4>Use it for</h4><ul>
+              <li>Checking diodes, LEDs and rectifier bridges</li>
+              <li>Transistor junctions (B–E and B–C act like diodes)</li>
+              <li>Finding a diode's polarity</li>
+            </ul></div>
+            <div class="block"><h4>Reading it</h4><ul>
+              <li>Red on anode, black on cathode (the band side). The meter shows the forward voltage.</li>
+              <li>Silicon diodes read about 0.5–0.7 V, Schottky diodes 0.15–0.45 V, LEDs about 1.6–3.3 V (they may glow faintly).</li>
+              <li>Reversed: <b>OL</b>. Low both ways means shorted. OL both ways means open.</li>
+            </ul></div>
+          </div>
+          <div class="lcd-sample" data-lcd="0.623" data-unit="V" data-ann=""></div>
+        </div>
+
+        <div class="sub" data-mode="cap">
+          <div class="sub-head"><span class="sym">⊣⊢</span><h3>Capacitance</h3></div>
+          <div class="grid2">
+            <div class="block"><h4>Use it for</h4><ul>
+              <li>Checking electrolytic caps that have dried out (reading well under the printed value)</li>
+              <li>Identifying unmarked ceramic or film caps</li>
+            </ul></div>
+            <div class="block"><h4>How to</h4><ol>
+              <li>Discharge the capacitor first.</li>
+              <li>Press <b>FUNC</b> until the unit shows F (nF, µF, mF).</li>
+              <li>Electrolytics: red to +. Wait: large values take several seconds to settle.</li>
+              <li>For small values, press <b>REL</b> with the leads apart first to cancel the leads' own capacitance.</li>
+            </ol></div>
+          </div>
+          <div class="lcd-sample" data-lcd="47.2" data-unit="µF" data-ann="AUTO"></div>
+        </div>
+      </article>
+
+      <!-- Temp -->
+      <article class="card" id="mode-temp" data-mode="temp">
+        <div class="card-head">
+          <span class="dial-chip">Temp</span>
+          <h3>Temperature</h3>
+          <p class="purpose">Reads a K-type thermocouple probe, the bead-on-a-wire probe that comes with the meter.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk">mA</span><span class="jk black">COM</span><span class="jk red">VΩHz</span></span>
+          <p>Probe <b>+</b> (red) into the jack marked <b>Temp</b>, <b>−</b> into <b>COM</b>.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>Heatsinks, motors and regulators running hot</li>
+            <li>3D-printer beds, ovens, water baths</li>
+            <li>Room and outdoor air</li>
+          </ul></div>
+          <div class="block"><h4>How to</h4><ol>
+            <li>Turn the dial to <b>Temp</b> and plug in the probe.</li>
+            <li>Press <b>°C/°F</b> to pick units.</li>
+            <li>Hold the bead firmly against the surface and give it a few seconds to settle.</li>
+          </ol></div>
+        </div>
+        <div class="caution"><h4>Careful</h4><ul>
+          <li>The meter reads up to 1000 °C, but the supplied bead probe is usually rated much lower, often around 200–250 °C. Check the probe's own rating.</li>
+          <li>The thermocouple tip is bare metal. Never touch it to anything live.</li>
+        </ul></div>
+        <div class="grid2">
+          <div class="block"><h4>Buttons that work here</h4><div class="btns"><span class="btn-chip">°C/°F</span><span class="btn-chip">MAX/MIN</span><span class="btn-chip redbtn">HOLD</span></div></div>
+          <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="22" data-unit="°C" data-ann=""></div></div>
+        </div>
+      </article>
+
+      <!-- hFE -->
+      <article class="card" id="mode-hfe" data-mode="hfe">
+        <div class="card-head">
+          <span class="dial-chip">hFE</span>
+          <h3>Transistor gain</h3>
+          <p class="purpose">Checks a bipolar transistor's current gain (β), for sorting and matching parts.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk adapter">10A</span><span class="jk adapter">mA</span><span class="jk">COM</span><span class="jk">VΩHz</span></span>
+          <p>No test leads. Plug the <b>hFE adapter</b> into the two left jacks, which are bracketed <b>hFE</b> on the panel.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>How to</h4><ol>
+            <li>Remove the test leads and plug in the adapter.</li>
+            <li>Turn the dial to <b>hFE</b>.</li>
+            <li>Look up the transistor's pinout. Insert it into the <b>NPN</b> or <b>PNP</b> row with E, B and C in the matching holes.</li>
+            <li>Read the gain. Typical small-signal parts read 100–400.</li>
+          </ol></div>
+          <div class="block"><h4>Good to know</h4><ul>
+            <li>Out-of-circuit parts only.</li>
+            <li>It tests at one small current, so use it to compare parts, not as a full spec.</li>
+            <li>A reading near 0 usually means wrong pin order or the wrong NPN/PNP row.</li>
+          </ul></div>
+        </div>
+        <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="214" data-unit="hFE" data-ann=""></div></div>
+      </article>
+
+      <!-- current intro + uA -->
+      <article class="card" id="mode-ua" data-mode="ua">
+        <div class="card-head">
+          <span class="dial-chip blue">µA</span>
+          <h3>Microamps</h3>
+          <p class="purpose">For tiny currents, like what a device draws while it sleeps.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk red">mA</span><span class="jk black">COM</span><span class="jk">VΩHz</span></span>
+          <p>Red <b>moves</b> to the <b>mA</b> jack. The meter goes <b>in series</b>: break the circuit and let the current flow through the meter.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>Sleep and standby current of ESP32, Arduino and battery gadgets</li>
+            <li>Leakage current, photodiodes, tiny sensors</li>
+          </ul></div>
+          <div class="block"><h4>How to measure any current</h4><ol>
+            <li>Power the circuit off.</li>
+            <li>Move red to <b>mA</b> (or <b>10A</b>), then set the dial.</li>
+            <li>Open the circuit (e.g. lift the battery + wire) and bridge the gap with the probes.</li>
+            <li>Power on and read. Press <b>FUNC</b> for AC.</li>
+            <li>Power off, remove the meter, and <b>put red back in VΩHz</b>.</li>
+          </ol></div>
+        </div>
+        <div class="tip"><h4>Tip</h4><p>The meter drops a little voltage while measuring current, more on µA than on mA. If a device resets when it wakes from sleep, measure on <b>mA</b> instead.</p></div>
+        <div class="grid2">
+          <div class="block"><h4>Buttons that work here</h4><div class="btns"><span class="btn-chip redbtn">FUNC</span><span class="btn-chip">REL</span><span class="btn-chip">MAX/MIN</span><span class="btn-chip redbtn">HOLD</span></div></div>
+          <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="48.2" data-unit="µA" data-ann="DC"></div></div>
+        </div>
+      </article>
+
+      <!-- mA -->
+      <article class="card" id="mode-ma" data-mode="ma">
+        <div class="card-head">
+          <span class="dial-chip blue">mA</span>
+          <h3>Milliamps</h3>
+          <p class="purpose">Everyday electronics currents, up to 600 mA.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk">10A</span><span class="jk red">mA</span><span class="jk black">COM</span><span class="jk">VΩHz</span></span>
+          <p>Red in <b>mA</b>, in series. This jack is protected by a <b>600 mA fuse</b>.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>LED current (typically 5–20 mA)</li>
+            <li>Dev boards running: Arduino ~20–50 mA, ESP32 ~80–250 mA with Wi-Fi on</li>
+            <li>4–20 mA industrial sensor loops</li>
+          </ul></div>
+          <div class="block"><h4>Good to know</h4><ul>
+            <li>Over 600 mA blows the fuse. If unsure, start on <b>A</b> with the <b>10A</b> jack.</li>
+            <li>Reads 0 when you're sure current is flowing? Check the fuse (see <a href="#fuses">fuse check</a>).</li>
+          </ul></div>
+        </div>
+        <div class="caution"><h4>Careful, for all current modes</h4><ul>
+          <li><b>Never put the probes across a voltage source</b> (battery, power supply, outlet). The meter is a near-short in this mode. Best case it blows the fuse. On mains it can cause an arc flash.</li>
+          <li>Always move the red lead back to <b>VΩHz</b> when you're done. Forgetting this is how most meters get damaged.</li>
+        </ul></div>
+        <div class="grid2">
+          <div class="block"><h4>Buttons that work here</h4><div class="btns"><span class="btn-chip redbtn">FUNC</span><span class="btn-chip">RANGE</span><span class="btn-chip">Hz%</span><span class="btn-chip">REL</span><span class="btn-chip">MAX/MIN</span><span class="btn-chip redbtn">HOLD</span></div></div>
+          <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="125.3" data-unit="mA" data-ann="AUTO DC"></div></div>
+        </div>
+      </article>
+
+      <!-- A -->
+      <article class="card" id="mode-a" data-mode="a">
+        <div class="card-head">
+          <span class="dial-chip blue">A</span>
+          <h3>Amps</h3>
+          <p class="purpose">High currents up to 10 A.</p>
+        </div>
+        <div class="connect">
+          <span class="jacks"><span class="jk red">10A</span><span class="jk">mA</span><span class="jk black">COM</span><span class="jk">VΩHz</span></span>
+          <p>Red in <b>10A</b>, in series. This jack has its own <b>10 A fuse</b>.</p>
+        </div>
+        <div class="grid2">
+          <div class="block"><h4>Use it for</h4><ul>
+            <li>Motors, pumps, heaters and fans</li>
+            <li>Battery chargers and LED strips</li>
+            <li>Car accessories and parasitic drain (start on A, then step down)</li>
+          </ul></div>
+          <div class="block"><h4>Good to know</h4><ul>
+            <li>Keep readings above about 5 A short, and let the meter cool between them. The internal shunt heats up.</li>
+            <li>Your test leads and clips must be rated for the current too.</li>
+            <li>Motors draw several times their running current at start-up. Connect first, then switch on.</li>
+          </ul></div>
+        </div>
+        <div class="caution"><h4>Careful</h4><p>Same rules as mA: series only, never across a source, and put the red lead back in <b>VΩHz</b> afterwards.</p></div>
+        <div class="block"><h4>Screen example</h4><div class="lcd-sample" data-lcd="2.413" data-unit="A" data-ann="AUTO DC"></div></div>
+      </article>
+
+    </div>
+  </div>
+
+  <!-- Buttons -->
+  <section class="ref" id="buttons">
+    <header><span class="eyebrow">Reference</span><h2>The buttons</h2><p>Press = a quick tap. Hold = keep it down for about 2 seconds.</p></header>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Button</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><span class="btn-chip redbtn">FUNC.</span></td><td>Switches between the tests that share a dial position: DC ↔ AC on V, mV, µA, mA and A; Ω → continuity → diode → capacitance on the Ω position.</td></tr>
+        <tr><td><span class="btn-chip redbtn">H / ☀</span></td><td><b>Press</b>: freezes the reading and shows <b>HOLD</b>. Press again to release. <b>Hold</b>: turns the backlight on or off.</td></tr>
+        <tr><td><span class="btn-chip">RANGE</span></td><td><b>Press</b>: leaves autorange (AUTO goes off) and steps through fixed ranges. Useful when autorange keeps hunting on a changing signal. <b>Hold</b>: back to AUTO.</td></tr>
+        <tr><td><span class="btn-chip">Hz%</span></td><td>On <b>AC</b> volts or current, shows the signal's frequency. Press again for duty cycle, again to return. It does nothing on DC. On the Hz% position it toggles Hz and %.</td></tr>
+        <tr><td><span class="btn-chip">REL/USB</span></td><td><b>Press</b>: relative mode (REL shows, AUTO turns off). The present reading becomes zero and the digits show the difference from it, while the bar graph keeps showing the absolute value. Good for nulling lead resistance or comparing parts. <b>Hold</b>: turns the USB data output on or off (the <b>USB</b> icon shows when on).</td></tr>
+        <tr><td><span class="btn-chip">MAX/MIN</span></td><td>Records the highest and lowest values. Press to step MAX → MIN → back. Hold to exit.</td></tr>
+        <tr><td><span class="btn-chip">°C/°F</span></td><td>Switches temperature units.</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <!-- Display -->
+  <section class="ref" id="display">
+    <header><span class="eyebrow">Reference</span><h2>Reading the display</h2><p>A 6000-count display: the biggest number it can show is 5999 (with the decimal point wherever the range puts it). The meter steps to the next range up as a reading passes that.</p></header>
+    <div class="disp-grid">
+      <div class="disp"><span class="ann-sample box"><span>AUTO</span></span><p>Autorange is on. The meter picks the range and moves the decimal point itself.</p></div>
+      <div class="disp"><span class="ann-sample">0L.</span><p><b>OL, overload.</b> The value is above the range: an open circuit in Ω or continuity, a reversed diode (shown as <b>.0L</b>), or too high in mV. The bar graph fills up with an arrow at the end.</p></div>
+      <div class="disp"><span class="ann-sample">−5.194</span><p>The minus sign means polarity is reversed. Swap the probes, or just read it as negative.</p></div>
+      <div class="disp"><span class="ann-sample">HOLD</span><p>The reading is frozen. Press H/☀ to release it. A frozen reading isn't live, so don't trust it for safety checks.</p></div>
+      <div class="disp"><span class="ann-sample">▮▮▮▮▮▮▯▯▯▯</span><p><b>Bar graph</b> (0–60 scale, follows the range). It updates faster than the digits, which makes it good for spotting trends, peaks and flicker.</p></div>
+      <div class="disp"><span class="ann-sample box"><span>USB</span></span><p>The PC data link is on. Hold REL/USB to toggle it.</p></div>
+      <div class="disp"><span class="ann-sample">m µ n · k M</span><p>Unit prefixes: milli (÷1000), micro (÷1,000,000), nano; kilo (×1000), mega (×1,000,000). 4.7 kΩ = 4700 Ω.</p></div>
+      <div class="disp"><span class="ann-sample">DC · AC</span><p>DC is steady one-direction voltage or current. AC alternates, like mains. The NK61P reads AC as <b>True RMS</b>, so it stays accurate on non-sine waveforms.</p></div>
+      <div class="disp"><span class="ann-sample">▭ low battery</span><p>Replace the battery soon. Readings can be wrong when it's low.</p></div>
+    </div>
+  </section>
+
+  <!-- Safety -->
+  <section class="ref" id="safety">
+    <header><span class="eyebrow">Safety</span><h2>Measurement categories</h2><p>The CAT rating says how big a voltage spike the meter can survive. Spikes get bigger the closer you are to the power coming into the building. The NK61P is rated <b>1000 V CAT III</b> and <b>600 V CAT IV</b>. Your test leads have their own rating, and the lower of the two applies.</p></header>
+    <div class="cat">
+      <div><b>CAT II</b><span class="yes">OK for this meter</span><p>Things that plug into outlets: appliances, power tools, the outlets themselves.</p></div>
+      <div><b>CAT III</b><span class="yes">OK up to 1000 V</span><p>Building wiring: breaker panels, hard-wired motors, fixed wiring and junction boxes.</p></div>
+      <div><b>CAT IV</b><span class="yes">OK up to 600 V</span><p>The service entrance: utility meter, service drop, outdoor lines feeding the building.</p></div>
+    </div>
+    <div class="two">
+      <div class="panel">
+        <h3>Every time</h3>
+        <ul>
+          <li>Inspect the leads. Cracked insulation or exposed metal means replace them.</li>
+          <li>Live, dead, live: check the meter on a known source before and after you test something you plan to touch.</li>
+          <li>On high voltage, keep one hand away from the work and clip the black lead on first.</li>
+          <li>Don't change the dial while the probes touch a circuit.</li>
+          <li>Remove the leads before opening the battery or fuse cover.</li>
+          <li>Don't use the meter if the case is cracked or wet, or near flammable gas.</li>
+        </ul>
+      </div>
+      <div class="panel" id="fuses">
+        <h3>Fuses and the quick fuse check</h3>
+        <p>The <b>mA</b> jack has a <b>600 mA</b> fuse and the <b>10A</b> jack a <b>10 A</b> fuse. Replace only with the same rating and type: fast-acting, high-breaking-capacity meter fuses. A glass hardware-store fuse is not a safe substitute.</p>
+        <ol>
+          <li>Set the dial to <b>Ω</b>, red lead in <b>VΩHz</b>.</li>
+          <li>Touch the red probe tip into the <b>mA</b> jack. A low reading means the fuse is good.</li>
+          <li>Do the same with the <b>10A</b> jack. It should read close to 0 Ω.</li>
+          <li><b>OL</b> means that fuse is blown.</li>
+        </ol>
+      </div>
+    </div>
+  </section>
+
+  <!-- PC link -->
+  <section class="ref" id="pc">
+    <header><span class="eyebrow">USB link</span><h2>Logging to the PC</h2></header>
+    <div class="two">
+      <div class="panel">
+        <ol>
+          <li>Plug in the USB cable.</li>
+          <li><b>Hold REL/USB</b> until the <b>USB</b> icon shows on the screen. Without it the meter sends nothing.</li>
+          <li>Double-click <b>NK61P Live</b> on the desktop. The dashboard opens in your browser.</li>
+          <li>Press <b>Start logging</b> to record every reading (about 5 per second) to a CSV file in the <code>logs</code> folder.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Troubleshooting</h3>
+        <div class="tbl-wrap"><table class="tbl">
+          <tbody>
+            <tr><td>"No data"</td><td>The USB icon is off. Hold REL/USB.</td></tr>
+            <tr><td>"Waiting for meter"</td><td>Cable unplugged, or another program has the port.</td></tr>
+            <tr><td>Reading stuck</td><td>HOLD is on. Press H/☀.</td></tr>
+            <tr><td>Current reads 0</td><td>Blown fuse, or red lead in the wrong jack.</td></tr>
+            <tr><td>Ω reading drifts</td><td>Your fingers are on the probe tips, or the circuit is still powered.</td></tr>
+          </tbody>
+        </table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Specs -->
+  <section class="ref" id="specs">
+    <header><span class="eyebrow">Specs</span><h2>Ranges</h2><p>From the panel markings and the NKTECH listing. The printed manual for your unit has the accuracy figures.</p></header>
+    <div class="tbl-wrap"><table class="tbl">
+      <thead><tr><th>Function</th><th>Ranges</th></tr></thead>
+      <tbody class="num">
+        <tr><td>DC voltage</td><td>600 mV · 6 V · 60 V · 600 V · 1000 V</td></tr>
+        <tr><td>AC voltage (True RMS)</td><td>6 V · 60 V · 600 V · 750 V</td></tr>
+        <tr><td>DC current</td><td>60 µA … 600 mA (mA jack) · 10 A (10A jack)</td></tr>
+        <tr><td>AC current</td><td>60 µA … 600 mA (mA jack) · 10 A (10A jack)</td></tr>
+        <tr><td>Resistance</td><td>600 Ω … 60 MΩ (autorange)</td></tr>
+        <tr><td>Capacitance</td><td>6 nF up to the mF range (large values are slow)</td></tr>
+        <tr><td>Temperature</td><td>−20 … 1000 °C (−4 … 1832 °F), K-type</td></tr>
+        <tr><td>Display</td><td>6000 counts, 60-segment bar graph, backlight</td></tr>
+        <tr><td>Safety</td><td>1000 V CAT III · 600 V CAT IV</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <footer>NK61P Field Guide · Written for the NKTECH NK61P "USB Link" meter. When this guide and the printed manual disagree, follow the manual.</footer>
+</div>
+
+<script>
+"use strict";
+// 7-segment glyphs, same bit layout the meter uses on its USB link: a=1 b=2 c=4 d=8 f=16 g=32 e=64
+const GLYPH = { "0": 0x5f, "1": 0x06, "2": 0x6b, "3": 0x2f, "4": 0x36, "5": 0x3d, "6": 0x7d, "7": 0x07, "8": 0x7f, "9": 0x3f, "L": 0x58, "-": 0x20, " ": 0 };
+const SEG = {
+  0x01: "M10 4 L52 4 L45 11 L17 11 Z", 0x02: "M54 6 L54 54 L47 50 L47 13 Z", 0x04: "M54 66 L54 114 L47 107 L47 70 Z",
+  0x08: "M10 116 L52 116 L45 109 L17 109 Z", 0x10: "M8 6 L8 54 L15 50 L15 13 Z",
+  0x20: "M10 60 L17 55 L45 55 L52 60 L45 65 L17 65 Z", 0x40: "M8 66 L8 114 L15 107 L15 70 Z",
+};
+const NS = "http://www.w3.org/2000/svg";
+function el(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+// "5.195" -> 4 right-aligned cells of {bits, dp}; a "." lights the point left of the next digit
+function cells(text) {
+  const out = [];
+  let dp = false, neg = false;
+  for (const ch of text) {
+    if (ch === "." ) { dp = true; continue; }
+    if (ch === "-" && out.length === 0) { neg = true; continue; }
+    out.push({ bits: GLYPH[ch] ?? 0, dp });
+    dp = false;
+  }
+  while (out.length < 4) out.unshift({ bits: 0, dp: false });
+  return { cells: out.slice(-4), neg };
+}
+// Draws 4 digits (each 60x120 units, 70 apart) into group g; returns an updater.
+function buildDigits(g) {
+  const digits = [];
+  const minus = el("path", { d: "M-46 57 L-16 57 L-16 64 L-46 64 Z", class: "seg" }, g);
+  for (let i = 0; i < 4; i++) {
+    const dg = el("g", { transform: `translate(${i * 70} 0) skewX(-6)` }, g);
+    const segs = {};
+    for (const b in SEG) segs[b] = el("path", { d: SEG[b], class: "seg" }, dg);
+    const dp = el("circle", { cx: i * 70 - 10, cy: 112, r: 6, class: "seg" }, g);
+    digits.push({ segs, dp });
+  }
+  return text => {
+    const { cells: cs, neg } = cells(text);
+    minus.classList.toggle("on", neg);
+    cs.forEach((c, i) => {
+      for (const b in digits[i].segs) digits[i].segs[b].classList.toggle("on", (c.bits & b) !== 0);
+      digits[i].dp.classList.toggle("on", c.dp);
+    });
+  };
+}
+
+// Inline LCD samples inside the cards
+document.querySelectorAll(".lcd-sample").forEach(box => {
+  const ann = box.dataset.ann.trim();
+  if (ann) { const a = document.createElement("span"); a.className = "a"; ann.split(" ").forEach(t => { const s = document.createElement("span"); s.textContent = t; a.appendChild(s); }); box.appendChild(a); }
+  const svg = el("svg", { viewBox: "-50 0 330 120", "aria-hidden": "true" }, box);
+  buildDigits(el("g", {}, svg))(box.dataset.lcd);
+  const u = document.createElement("span"); u.className = "u"; u.textContent = box.dataset.unit; box.appendChild(u);
+  box.setAttribute("role", "img");
+  box.setAttribute("aria-label", `Display shows ${box.dataset.lcd} ${box.dataset.unit} ${ann}`.trim());
+});
+
+// ---- the big meter drawing ----
+const lcdDigits = buildDigits(el("g", { transform: "scale(0.5)" }, document.getElementById("lcd-digits")));
+const DIAL = [
+  { label: "OFF", cls: "off" }, { label: "V", cls: "blue", mode: "v" }, { label: "mV", cls: "blue", mode: "mv" },
+  { label: "Hz%", mode: "hz" }, { label: "Ω▶|", mode: "ohm" }, { label: "Temp", mode: "temp" }, { label: "hFE", mode: "hfe" },
+  { label: "µA", cls: "blue", mode: "ua" }, { label: "mA", cls: "blue", mode: "ma" }, { label: "A", cls: "blue", mode: "a" },
+  { label: "OFF", cls: "off" },
+];
+const CX = 170, CY = 362, R = 104;
+const angleOf = i => 210 - 24 * i;   // degrees, 0 = right, counter-clockwise; sweeps 210° → -30°
+const dialG = document.getElementById("dial-labels");
+const dialEls = {};
+DIAL.forEach((d, i) => {
+  const a = angleOf(i) * Math.PI / 180;
+  const x = CX + R * Math.cos(a), y = CY - R * Math.sin(a);
+  const w = Math.max(28, d.label.length * 8 + 12);
+  const node = d.mode ? el("a", { href: `#mode-${d.mode}`, class: `dial-pos ${d.cls || ""}`, "aria-label": `Dial position ${d.label}` }, dialG)
+                      : el("g", { class: `dial-pos ${d.cls || ""}` }, dialG);
+  el("rect", { x: x - w / 2, y: y - 11, width: w, height: 22, rx: 5 }, node);
+  const t = el("text", { x, y: y + 4.5, "text-anchor": "middle" }, node);
+  t.textContent = d.label;
+  if (d.mode) dialEls[d.mode] = { node, index: i };
+});
+
+// What the drawing shows for each mode (and sub-mode of the Ω position)
+const MODES = {
+  v:    { dial: "v",    jacks: { v: "red", com: "black" },  lcd: "5.195", unit: "V",  ann: ["AUTO", "DC", "USB"] },
+  mv:   { dial: "mv",   jacks: { v: "red", com: "black" },  lcd: "12.48", unit: "mV", ann: ["AUTO", "DC", "USB"] },
+  hz:   { dial: "hz",   jacks: { v: "red", com: "black" },  lcd: "1.000", unit: "kHz", ann: ["AUTO", "USB"] },
+  ohm:  { dial: "ohm",  jacks: { v: "red", com: "black" },  lcd: "4.700", unit: "kΩ", ann: ["AUTO", "USB"] },
+  cont: { dial: "ohm",  jacks: { v: "red", com: "black" },  lcd: "0.4",   unit: "Ω",  ann: ["USB"] },
+  diode:{ dial: "ohm",  jacks: { v: "red", com: "black" },  lcd: "0.623", unit: "V",  ann: ["USB"] },
+  cap:  { dial: "ohm",  jacks: { v: "red", com: "black" },  lcd: "47.2",  unit: "µF", ann: ["AUTO", "USB"] },
+  temp: { dial: "temp", jacks: { v: "red", com: "black" },  lcd: "22",    unit: "°C", ann: ["USB"] },
+  hfe:  { dial: "hfe",  jacks: { a10: "adapter", ma: "adapter" }, lcd: "214", unit: "hFE", ann: ["USB"] },
+  ua:   { dial: "ua",   jacks: { ma: "red", com: "black" }, lcd: "48.2",  unit: "µA", ann: ["DC", "USB"] },
+  ma:   { dial: "ma",   jacks: { ma: "red", com: "black" }, lcd: "125.3", unit: "mA", ann: ["AUTO", "DC", "USB"] },
+  a:    { dial: "a",    jacks: { a10: "red", com: "black" }, lcd: "2.413", unit: "A", ann: ["AUTO", "DC", "USB"] },
+};
+const knob = document.getElementById("knob");
+let current = null;
+function show(modeId) {
+  const m = MODES[modeId];
+  if (!m || modeId === current) return;
+  current = modeId;
+  const idx = dialEls[m.dial].index;
+  knob.style.transform = `rotate(${90 - angleOf(idx)}deg)`;
+  Object.values(dialEls).forEach(d => d.node.classList.remove("active"));
+  dialEls[m.dial].node.classList.add("active");
+  for (const j of ["a10", "ma", "com", "v"]) {
+    const ring = document.getElementById(`jack-${j}`);
+    ring.setAttribute("class", `m-jack-ring ${m.jacks[j] || ""}`);
+  }
+  lcdDigits(m.lcd);
+  document.getElementById("lcd-unit").textContent = m.unit;
+  for (const a of ["AUTO", "USB", "DC", "AC"]) document.getElementById(`ann-${a}`).classList.toggle("on", m.ann.includes(a));
+}
+// Bar graph ticks along the top of the drawn LCD (decorative)
+const bar = document.getElementById("lcd-bar");
+for (let i = 0; i < 60; i++) el("rect", { x: 46 + i * 4.1, y: 56, width: 2.6, height: 8, class: "seg" + (i < 18 ? " on" : "") }, bar);
+
+// Follow whichever card (or Ω sub-section) sits in the upper part of the viewport.
+const targets = [...document.querySelectorAll(".card[data-mode]:not(#mode-ohm), #mode-ohm .sub[data-mode]")];
+const io = new IntersectionObserver(entries => {
+  const visible = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+  if (visible.length) show(visible[0].target.dataset.mode);
+}, { rootMargin: "-15% 0px -55% 0px" });
+targets.forEach(t => io.observe(t));
+
+const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+dialG.addEventListener("click", e => {
+  const a = e.target.closest("a");
+  if (!a) return;
+  e.preventDefault();
+  const card = document.querySelector(a.getAttribute("href"));
+  show(card.dataset.mode);
+  card.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+});
+show("v");
+</script>
